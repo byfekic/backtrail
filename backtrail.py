@@ -170,14 +170,14 @@ def edit(idx=None):
  l=cfg["locations"][idx].copy() if idx is not None else {"name":"","backup_name":"","path":""}
  w=tk.Toplevel(root);w.title("Backup Source");w.geometry("720x230");w.grab_set();w.configure(bg=BG)
  vs={k:tk.StringVar(value=l.get(k,"")) for k in ("name","backup_name","path")}
- for r,(k,t) in enumerate((("name","Display name"),("backup_name","Backup name"),("path","PRODUCTION path"))):
+ for r,(k,t) in enumerate((("name","Display name"),("backup_name","Backup name"),("path","Folder to back up"))):
   ttk.Label(w,text=t).grid(row=r,column=0,padx=12,pady=10,sticky="w")
   ttk.Entry(w,textvariable=vs[k],width=70).grid(row=r,column=1,padx=5,sticky="ew")
  ttk.Button(w,text="Browse",command=lambda:vs["path"].set(filedialog.askdirectory() or vs["path"].get())).grid(row=2,column=2)
  def ok():
   d={k:v.get().strip() for k,v in vs.items()}
   if not d["path"]:return messagebox.showerror("Missing path","Select a folder.",parent=w)
-  d["name"]=d["name"] or "Production";d["backup_name"]=d["backup_name"] or d["name"]
+  d["name"]=d["name"] or "Source";d["backup_name"]=d["backup_name"] or d["name"]
   if idx is None:cfg["locations"].append(d)
   else:cfg["locations"][idx]=d
   save();refresh_sources();w.destroy()
@@ -711,7 +711,7 @@ for key,title,accent in (("sources","SOURCES",DARK),("ready","ONLINE",DARK),("ba
 # ===================== Sources table =====================
 tframe=tk.Frame(root,bg=BORDER,highlightbackground=BORDER,highlightthickness=1);tframe.pack(fill="x",padx=16,pady=6)
 tree=ttk.Treeview(tframe,columns=("n","b","p","s","last"),show="headings",height=8)
-for c,t,wid,anc in (("n","Name",140,"w"),("b","Backup Name",160,"w"),("p","PRODUCTION Path",440,"w"),("s","Status",90,"center"),("last","Last Backup  ·  by",240,"center")):
+for c,t,wid,anc in (("n","Name",140,"w"),("b","Backup Name",160,"w"),("p","Folder",440,"w"),("s","Status",90,"center"),("last","Last Backup  ·  by",240,"center")):
  tree.heading(c,text=t);tree.column(c,width=wid,anchor=anc)
 tree.tag_configure("even",background=CARD)
 tree.tag_configure("odd",background=STRIPE)

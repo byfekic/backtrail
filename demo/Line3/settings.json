@@ -1,5 +1,5 @@
 {
-  "machine": "SCADA",
+  "machine": "Machine_C",
   "speed": 1.0,
   "recirculation": 10
 }

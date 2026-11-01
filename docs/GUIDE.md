@@ -1,8 +1,8 @@
 # Backtrail — User Guide
 
-> **What it is:** Backtrail is a Windows desktop tool that takes point-in-time backups of production folders (local or network), archives them as ZIP or RAR, and tracks exactly **what changed** between backups — added, modified, and deleted files, plus key-level changes inside configuration (`.json`) files. Every backup records **who** took it and **why**, any two backups can be **compared**, any backup can be **restored** (whole or single files, into a folder or over the source with a safety backup first), and old backups can be **pruned** automatically.
+> **What it is:** Backtrail is a Windows desktop tool that takes point-in-time backups of the folders that run your machines (local or network), archives them as ZIP or RAR, and tracks exactly **what changed** between backups — added, modified, and deleted files, plus key-level changes inside configuration (`.json`) files. Every backup records **who** took it and **why**, any two backups can be **compared**, any backup can be **restored** (whole or single files, into a folder or over the source with a safety backup first), and old backups can be **pruned** automatically.
 >
-> **Who it's for:** Anyone who needs a traceable history of a machine's / line's PRODUCTION folder and a record of configuration changes over time.
+> **Who it's for:** Anyone who needs a traceable history of a machine's or line's configuration folder and a record of configuration changes over time.
 
 ---
 
@@ -25,7 +25,7 @@
 
 ## Key concepts
 
-- **Source** — a PRODUCTION folder you want to back up. Each source has a **Display name**, a **Backup name** (used in file names), and a **PRODUCTION path**.
+- **Source** — a folder you want to back up. Each source has a **Display name**, a **Backup name** (used in file names), and a **folder path**.
 - **Destination (backup root)** — the folder where Backtrail writes all backups. Each source gets its own sub-folder inside it.
 - **Backup** — one run produces three files: the **archive**, a **manifest**, and a **changelog** (see [What each backup produces](#what-each-backup-produces)).
 - **Manifest** — a JSON list of every file with its size and SHA-256 hash. Backtrail compares the newest manifest against the previous one to detect changes.
@@ -62,9 +62,9 @@ Pick **Fast** for large folders you back up often; **Maximum** only when storage
 
 ### 3. Add a backup source
 Click **+ Add** and fill in:
-- **Display name** — a friendly label (e.g. `Sorter PLC`).
+- **Display name** — a friendly label (e.g. `Line 1 PLC`).
 - **Backup name** — used in the backup file names (letters, numbers, `. _ -`; other characters become `_`).
-- **PRODUCTION path** — *Browse* to the folder (local drive or `\\server\share\...`).
+- **Folder to back up** — *Browse* to the folder (local drive or `\\server\share\...`).
 
 Click **Save**. The source appears in the list with a status of **● Ready** (reachable) or **● Offline** (not reachable right now).
 
@@ -81,7 +81,7 @@ Progress and results appear in the **Activity log** at the bottom. A finished ru
 SUCCESS: +3 ~2 -0 !1
 ```
 
-meaning **+**added, **~**modified, **-**deleted, and **!**skipped (files that were in use). When several sources run at once, each line is prefixed with the source's backup name (e.g. `[sorter] SUCCESS: …`) so you can tell them apart. The Run buttons stay disabled until the whole run has finished.
+meaning **+**added, **~**modified, **-**deleted, and **!**skipped (files that were in use). When several sources run at once, each line is prefixed with the source's backup name (e.g. `[LINE1_PLC] SUCCESS: …`) so you can tell them apart. The Run buttons stay disabled until the whole run has finished.
 
 ---
 
@@ -104,7 +104,7 @@ To stop it, open the same dialog and click **Remove schedule**.
 > You can also trigger a silent run yourself at any time from a command line or another scheduler:
 > ```
 > "C:\path\to\Backtrail\Backtrail.exe" --run
-> "C:\path\to\Backtrail\Backtrail.exe" --run --note "after sorter firmware 6.2.1"
+> "C:\path\to\Backtrail\Backtrail.exe" --run --note "after PLC firmware 6.2.1"
 > ```
 > It exits with code `0` if every source succeeded and `1` if any failed, so it slots into other automation. Runs started this way are signed `Mode: scheduled`; `--note` stamps them with a reason like the Note box does in the window.
 
@@ -202,7 +202,7 @@ For every run, Backtrail writes to `…\<Destination>\<BackupName>\`:
 
 | File | Purpose |
 |---|---|
-| `YYYY-MM-DD_HH-MM-SS_<name>_PRODUCTION.zip` (or `.rar`) | The actual archive of the folder. |
+| `YYYY-MM-DD_HH-MM-SS_<name>_ARCHIVE.zip` (or `.rar`) | The actual archive of the folder. |
 | `YYYY-MM-DD_HH-MM-SS_<name>_MANIFEST.json` | `{"_meta": {...}, "files": {...}}` — SHA-256 + size of every file under `files`, used for change detection; under `_meta` the date, source, **user**, **host**, **mode**, **note**, archive name, the previous backup and the **digital signature** (see below). (Manifests written by the original tool are a bare file map and are still read.) |
 | `YYYY-MM-DD_HH-MM-SS_<name>_CHANGELOG.txt` | Human-readable report of what changed since the previous backup. |
 | `<from>_to_<to>_COMPARE.txt` | Written by **Compare Backups…**: the changelog between two chosen backups. |
@@ -232,7 +232,7 @@ A changelog starts with a header: `Date`, `Name`, `Source`, **`By`** (user @ mac
 
 ## Restoring a backup
 
-Any backup can be put back from inside Backtrail: all of it or just the files you pick, into a new folder or straight over the live PRODUCTION folder.
+Any backup can be put back from inside Backtrail: all of it or just the files you pick, into a new folder or straight over the live source folder.
 
 **Where to start**
 - **Restore…** in the main window (the newest backup of the selected source is preselected),
@@ -290,12 +290,12 @@ Other factors: backing up over a slow network share is limited by the link, not 
 | A source shows **● Offline** | The path (often a `\\server\share`) is unreachable. Check network/VPN and permissions. Status refreshes automatically. |
 | App feels slow to refresh status | It is contacting an unreachable network path. Status checks run in the background and time out on their own; the window stays usable. |
 | **"RAR selected but WinRAR/Rar.exe was not found"** | Install WinRAR, or switch Archive to **ZIP**, or set the correct `rar_path` (see Configuration). |
-| A run reports **"Source unavailable"** | The PRODUCTION path was offline when the backup started. Reconnect and run again. |
+| A run reports **"Source unavailable"** | The folder was offline when the backup started. Reconnect and run again. |
 | Some files appear under **NOT BACKED UP** | Those files were in use/locked during the run. Close the app holding them and re-run, or accept that live-locked files are skipped. |
 | No backups listed on the dashboard | Check that the **Destination** is set correctly and reachable, and that at least one backup has run. |
 | Backups take too long | Set **Compression** to **Fast** (see [Performance](#performance)). Also check whether the source or destination is on a slow network share, and whether antivirus is scanning the destination folder. |
 | The daily backup didn't run | It only runs while you are logged on to that PC. Check `backtrail_scheduled.log` next to `Backtrail.exe`, and confirm the task **Backtrail Daily Backup** still exists in Windows *Task Scheduler*. |
-| Scheduled run logged errors | Open `backtrail_scheduled.log` — each failure is tagged with its source, e.g. `[sorter] ERROR: Source unavailable`. Usually the share was offline at that hour. |
+| Scheduled run logged errors | Open `backtrail_scheduled.log` — each failure is tagged with its source, e.g. `[LINE1_PLC] ERROR: Source unavailable`. Usually the share was offline at that hour. |
 | The app was moved to a new folder | The scheduled task still points at the old path. Open **Schedule…** and click **Enable / Update** to re-point it. |
 
 ---
@@ -315,7 +315,7 @@ Backtrail keeps two small files **next to `Backtrail.exe`**:
     "workers": 0,
     "rar_path": "C:\\Program Files\\WinRAR\\Rar.exe",
     "locations": [
-      { "name": "Sorter PLC", "backup_name": "sorter", "path": "\\\\server\\line1\\PRODUCTION" }
+      { "name": "Line 1 PLC", "backup_name": "LINE1_PLC", "path": "\\\\server\\line1\\config" }
     ]
   }
   ```

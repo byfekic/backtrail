@@ -2,17 +2,17 @@
 
 <h1 align="center">Backtrail</h1>
 <p align="center"><b>Signed backups with a readable history.</b><br>
-A Windows desktop tool that backs up production folders, writes down exactly what changed and who changed it, signs every backup, and puts files back when it has to.</p>
+A Windows desktop tool that backs up the folders that run your machines, writes down exactly what changed and who changed it, signs every backup, and puts files back when it has to.</p>
 
 ---
 
-Backtrail is for the folders that run a machine, a line or a plant: PLC exports, sorter configuration, CSV parameter tables, JSON settings. Those folders change in small, undocumented ways, and after an incident nobody can say what was different last week or who touched it. Backtrail turns every backup into evidence.
+Backtrail is for the folders that run a machine, a line or a plant: PLC exports, machine parameters, CSV recipe tables, JSON settings. Those folders change in small, undocumented ways, and after an incident nobody can say what was different last week or who touched it. Backtrail turns every backup into evidence.
 
 Each run of a source produces three files:
 
 | File | What it is |
 |---|---|
-| `<stamp>_<name>_PRODUCTION.zip` (or `.rar`) | The archive of the folder. Opens with Explorer or WinRAR like any other. |
+| `<stamp>_<name>_ARCHIVE.zip` (or `.rar`) | The archive of the folder. Opens with Explorer or WinRAR like any other. |
 | `<stamp>_<name>_CHANGELOG.txt` | Added, modified and deleted files since the previous backup; for `.json` files the exact keys that changed, old value to new. Headed by who took it, on which PC, manual or scheduled, and why. |
 | `<stamp>_<name>_MANIFEST.json` | Every file with its size and SHA-256, plus the metadata, sealed with an Ed25519 signature. |
 

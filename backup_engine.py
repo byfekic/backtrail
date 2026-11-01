@@ -111,10 +111,10 @@ def header_meta(changelog):
  except OSError:pass
  return meta
 # ----------------------------------------------------------- backups ----
-STAMP_RE=re.compile(r"^(?P<stamp>\d{4}-\d{2}-\d{2}_\d{2}-\d{2}-\d{2})_(?P<name>.+?)_(?P<kind>PRODUCTION\.(?:zip|rar)|MANIFEST\.json|CHANGELOG\.txt)$",re.I)
+STAMP_RE=re.compile(r"^(?P<stamp>\d{4}-\d{2}-\d{2}_\d{2}-\d{2}-\d{2})_(?P<name>.+?)_(?P<kind>ARCHIVE\.(?:zip|rar)|MANIFEST\.json|CHANGELOG\.txt)$",re.I)
 def parse_stamp(text):
  # datetime from a backup or archive name: 2026-09-07_16-47-49_... (Backtrail) or
- # LINE1_MSC_20260907_1647.rar (a plant's own nightly batch); None when it has none
+ # LINE1_PLC_20260907_1647.rar (a plant's own nightly batch); None when it has none
  m=re.search(r"(\d{4})-(\d{2})-(\d{2})_(\d{2})-(\d{2})(?:-(\d{2}))?",str(text))
  if not m:m=re.search(r"(?<!\d)(\d{4})(\d{2})(\d{2})_(\d{2})(\d{2})(\d{2})?(?!\d)",str(text))
  if not m:return None
@@ -174,7 +174,7 @@ def list_backups(folder):
   if not m or not p.is_file():continue
   b=out.setdefault((m["stamp"],m["name"]),Backup(folder,m["stamp"],m["name"]))
   k=m["kind"].lower()
-  if k.startswith("production"):b.archive=p
+  if k.startswith("archive"):b.archive=p
   elif k.startswith("manifest"):b.manifest=p
   else:b.changelog=p
  return [out[k] for k in sorted(out)]
@@ -385,7 +385,7 @@ def verify_archive(backup_or_manifest,trust=None):
   m=STAMP_RE.match(manifest.name)
   if m:
    for ext in (".zip",".rar"):
-    p=manifest.with_name(f"{m['stamp']}_{m['name']}_PRODUCTION{ext}")
+    p=manifest.with_name(f"{m['stamp']}_{m['name']}_ARCHIVE{ext}")
     if p.exists():archive=p;break
  r=verify_manifest(manifest,trust)
  if r["status"] in ("unsigned","unavailable","invalid"):return r
@@ -395,7 +395,7 @@ def verify_archive(backup_or_manifest,trust=None):
  return dict(r,detail=r["detail"]+"; archive intact")
 # ------------------------------------------------------------- a run ----
 def run(loc,cfg,log=print,note="",mode="manual"):
- # one backup of one source. `note` says why (free text from the GUI or --note),
+ # one backup of one source: <stamp>_<name>_ARCHIVE.zip|rar + _MANIFEST.json + _CHANGELOG.txt. `note` says why (free text from the GUI or --note),
  # `mode` is "manual" or "scheduled"; both go into the manifest and the changelog with the user name.
  src=Path(loc["path"])
  if not src.exists():raise FileNotFoundError(f"Source unavailable: {src}")
@@ -407,7 +407,7 @@ def run(loc,cfg,log=print,note="",mode="manual"):
  # same names and silently overwrite the previous backup, so wait for a free slot.
  for _ in range(40):
   stamp=datetime.now().strftime("%Y-%m-%d_%H-%M-%S");prefix=f"{stamp}_{safe}"
-  ap=od/f"{prefix}_PRODUCTION{ext}";mp=od/f"{prefix}_MANIFEST.json";cp=od/f"{prefix}_CHANGELOG.txt"
+  ap=od/f"{prefix}_ARCHIVE{ext}";mp=od/f"{prefix}_MANIFEST.json";cp=od/f"{prefix}_CHANGELOG.txt"
   if not (ap.exists() or mp.exists() or cp.exists()):break
   time.sleep(0.25)
  # the archive (compression) and the scan (hashing) are independent reads of the
@@ -449,7 +449,7 @@ def run(loc,cfg,log=print,note="",mode="manual"):
   except Exception as ex:log("WARNING: backup not signed: "+str(ex))
  head.append(("Signature",f"ed25519 key {sig['key_id']} by {sig['signer']}" if sig else "(none)"+("" if signing_available() else " -- the cryptography package is not installed")))
  allskip=sorted(set(skipped)|set(arch_skip))
- L,add,mod,delete=changelog_lines("PRODUCTION BACKUP CHANGELOG",head,old,new,jd,skipped=allskip,arch_err=arch_err[0] if arch_err else None)
+ L,add,mod,delete=changelog_lines("BACKUP CHANGELOG",head,old,new,jd,skipped=allskip,arch_err=arch_err[0] if arch_err else None)
  if allskip:log(f"WARNING: {len(allskip)} file(s) skipped (in use / unreadable).")
  save_manifest(mp,new,meta);cp.write_text("\n".join(L),encoding="utf-8");shutil.rmtree(temp,ignore_errors=True)
  log(f"SUCCESS: +{len(add)} ~{len(mod)} -{len(delete)}"+(f" !{len(allskip)}" if allskip else ""))
@@ -574,7 +574,7 @@ def prune(folder,keep_last=0,keep_days=0,log=print):
  if removed:log(f"Retention: {len(removed)} old backup(s) removed, {len(bks)-len(removed)} kept.")
  return removed
 # ----------------------------------------------------------- restore ----
-# Putting a backup back: into a fresh folder, or over the live PRODUCTION folder it came from.
+# Putting a backup back: into a fresh folder, or over the live folder it came from.
 # Every file is checked against the signed manifest hash BEFORE anything is written, so a
 # tampered archive restores nothing. A restore over the source is always preceded by a safety
 # backup of the source (what you are about to overwrite is itself kept and signed). Each

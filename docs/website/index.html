@@ -135,7 +135,7 @@ footer { padding-block: 40px; border-top: 1px solid var(--line); color: var(--mu
 
 <div class="hero" id="top">
   <div>
-    <p class="eyebrow">Backups for production folders</p>
+    <p class="eyebrow">Backups for the folders that run your machines</p>
     <h1>Signed backups with a readable history</h1>
     <p class="lead">Backtrail copies the folders that run your machines, writes down exactly what changed and who changed it, seals every backup with a signature, and puts files back when it has to.</p>
     <div class="cta">
@@ -145,17 +145,17 @@ footer { padding-block: 40px; border-top: 1px solid var(--line); color: var(--mu
     <div class="facts"><span>Windows 10 / 11</span><span>No installer, no admin rights</span><span>ZIP or RAR</span><span>Open source, MIT</span></div>
   </div>
   <div class="ledger" aria-label="Example changelog written by Backtrail">
-<pre><span class="dim">PRODUCTION BACKUP CHANGELOG</span>
+<pre><span class="dim">BACKUP CHANGELOG</span>
 <span class="k">Date:</span> 2026-10-24 10:08:18
-<span class="k">Name:</span> LINE1_SORTER
+<span class="k">Name:</span> LINE1_PLC
 <span class="k">By:</span> alice @ WS-LINE1
 <span class="k">Note:</span> before firmware update 6.2.1
 <span class="k">Signature:</span> ed25519 key dbf6103cee4a26c4
 
 <span class="ok">ADDED</span>      (none)
-<span class="bad">DELETED</span>    - MSC/DB_Csv/Plant_Outputs.csv
-<span class="warn">MODIFIED</span>   * Applications/Version.csv
-           * DataDrawSupervisor/settings.json
+<span class="bad">DELETED</span>    - recipes/recipe_A.csv
+<span class="warn">MODIFIED</span>   * config/version.txt
+           * hmi/settings.json
                ~ $.speed: 1.0 -&gt; 1.5
                + $.windows: 12
 
@@ -239,7 +239,7 @@ SUMMARY    Added: 0  Modified: 2  Deleted: 1</pre>
   <div class="specs">
   <table>
     <tr><th>Runs on</th><td>Windows 10 and 11. A folder with an exe, no installer, no admin rights. Also runs from source with Python 3.10+.</td></tr>
-    <tr><th>Sources</th><td>Any local or UNC path (<code>\\server\share\PRODUCTION</code>). Several at once.</td></tr>
+    <tr><th>Sources</th><td>Any local or UNC path (<code>\\server\share\config</code>). Several at once.</td></tr>
     <tr><th>Archives</th><td>ZIP built in, three compression levels. RAR through WinRAR.</td></tr>
     <tr><th>Integrity</th><td>SHA-256 per file; Ed25519 signature per backup; <code>--verify</code> re-checks everything and exits 1 on a problem.</td></tr>
     <tr><th>Automation</th><td>Daily Windows scheduled task. <code>Backtrail.exe --run --note "text"</code> from any scheduler.</td></tr>

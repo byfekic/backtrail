@@ -19,7 +19,7 @@ HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE.parent))
 import backup_engine as e  # noqa: E402
 
-DEMO = HERE.parent / "demo" / "Folder_1" / "PRODUCTION"
+DEMO = HERE.parent / "demo" / "Line1"
 
 
 def _cfg(tmp_path, **over):
@@ -31,10 +31,10 @@ def _cfg(tmp_path, **over):
 
 @pytest.fixture
 def prod(tmp_path):
-    """A copy of the demo PRODUCTION folder and a source pointing at it."""
-    src = tmp_path / "PRODUCTION"
+    """A copy of the demo folder and a source pointing at it."""
+    src = tmp_path / "source"
     shutil.copytree(str(DEMO), str(src))
-    return src, {"name": "Demo", "backup_name": "Sorter_A", "path": str(src)}
+    return src, {"name": "Demo", "backup_name": "Machine_A", "path": str(src)}
 
 
 def _three_backups(tmp_path, prod, cfg):
@@ -43,14 +43,14 @@ def _three_backups(tmp_path, prod, cfg):
     e.run(loc, cfg, log=lambda s: None, note="before firmware", mode="manual")
     time.sleep(1.05)
     (src / "settings.json").write_text(json.dumps(
-        {"machine": "Sorter_A", "speed": 1.5, "recirculation": 10, "newkey": True}), encoding="utf-8")
+        {"machine": "Machine_A", "speed": 1.5, "recirculation": 10, "newkey": True}), encoding="utf-8")
     (src / "added.txt").write_text("x", encoding="utf-8")
     (src / "settings.ini").unlink()
     e.run(loc, cfg, log=lambda s: None, note="", mode="scheduled")
     time.sleep(1.05)
     (src / "third.txt").write_text("y", encoding="utf-8")
     e.run(loc, cfg, log=lambda s: None, note="third", mode="manual")
-    bks = e.list_backups(Path(cfg["backup_root"]) / "Sorter_A")
+    bks = e.list_backups(Path(cfg["backup_root"]) / "Machine_A")
     assert len(bks) == 3
     return bks
 
@@ -68,7 +68,7 @@ def test_run_signs_manifest_and_changelog(tmp_path, prod):
     src, loc = prod
     cfg = _cfg(tmp_path)
     cp = e.run(loc, cfg, log=lambda s: None, note="ticket 4711", mode="manual")
-    bks = e.list_backups(Path(cfg["backup_root"]) / "Sorter_A")
+    bks = e.list_backups(Path(cfg["backup_root"]) / "Machine_A")
     assert len(bks) == 1 and bks[0].complete and bks[0].changelog == cp
     meta, files = e.load_manifest(bks[0].manifest)
     user, host = e.identity()
@@ -98,29 +98,29 @@ def test_second_run_names_its_previous_and_detects_changes(tmp_path, prod):
 def test_v1_manifest_and_old_changelog_still_read(tmp_path):
     # a manifest from the original tool: the bare file map, no metadata
     flat = {"a.txt": {"size": 1, "mtime": 0.0, "sha256": "x"}}
-    p = tmp_path / "2026-08-05_12-24-06_Sorter_C_MANIFEST.json"
+    p = tmp_path / "2026-08-05_12-24-06_Machine_C_MANIFEST.json"
     p.write_text(json.dumps(flat), encoding="utf-8")
     assert e.load_manifest(p) == ({}, flat)
-    # a v2 manifest whose production folder happens to hold files called "files" and "_meta"
+    # a v2 manifest whose source folder happens to hold files called "files" and "_meta"
     tricky = {"_meta": {"size": 1, "mtime": 0.0, "sha256": "x"}, "files": {"size": 2, "mtime": 0.0, "sha256": "y"}}
     p.write_text(json.dumps(tricky), encoding="utf-8")
     assert e.load_manifest(p) == ({}, tricky)
     # the old changelog header carries no "By:" line: the author is unknown, nothing breaks
-    (tmp_path / "2026-08-05_12-24-06_Sorter_C_CHANGELOG.txt").write_text(
-        "Backtrail\nSigned backups with a readable history\n" + "=" * 76 + "\nPRODUCTION BACKUP CHANGELOG\n"
-        "Date: 2026-08-05 12:24:06\nName: Sorter_C\nSource: C:\\PRODUCTION\n", encoding="utf-8")
+    (tmp_path / "2026-08-05_12-24-06_Machine_C_CHANGELOG.txt").write_text(
+        "Backtrail\nSigned backups with a readable history\n" + "=" * 76 + "\nBACKUP CHANGELOG\n"
+        "Date: 2026-08-05 12:24:06\nName: Machine_C\nSource: C:\\Machine\n", encoding="utf-8")
     b = e.list_backups(tmp_path)[0]
-    assert b.by() == "(unknown)" and b.meta["source"] == "C:\\PRODUCTION"
+    assert b.by() == "(unknown)" and b.meta["source"] == "C:\\Machine"
     assert "(unknown)" in b.label() and not b.complete
 
 
 # ----------------------------------------------------------- backups --
 def test_parse_stamp_knows_both_naming_schemes():
-    assert e.parse_stamp("2026-09-07_16-47-49_LINE1_MSC_PRODUCTION.rar").strftime("%Y%m%d%H%M%S") == "20260907164749"
-    assert e.parse_stamp("LINE1_MSC_20260907_1647.rar").strftime("%Y%m%d%H%M") == "202609071647"
-    assert e.parse_stamp("PRODUCTION.zip") is None
-    assert e._name_of(Path("LINE1_MSC_20260907_1647.rar")) == "LINE1_MSC"
-    assert e._name_of(Path("2026-09-07_16-47-49_LINE1_MSC_PRODUCTION.rar")) == "LINE1_MSC"
+    assert e.parse_stamp("2026-09-07_16-47-49_LINE1_PLC_ARCHIVE.rar").strftime("%Y%m%d%H%M%S") == "20260907164749"
+    assert e.parse_stamp("LINE1_PLC_20260907_1647.rar").strftime("%Y%m%d%H%M") == "202609071647"
+    assert e.parse_stamp("ARCHIVE.zip") is None
+    assert e._name_of(Path("LINE1_PLC_20260907_1647.rar")) == "LINE1_PLC"
+    assert e._name_of(Path("2026-09-07_16-47-49_LINE1_PLC_ARCHIVE.rar")) == "LINE1_PLC"
 
 
 def test_list_backups_groups_the_three_files(tmp_path, prod):
@@ -131,7 +131,7 @@ def test_list_backups_groups_the_three_files(tmp_path, prod):
         assert b.archive.suffix == ".zip" and b.manifest.name.endswith("_MANIFEST.json")
         assert b.changelog.name.endswith("_CHANGELOG.txt") and len(b.paths()) == 3
     folders = e.source_folders(cfg["backup_root"])
-    assert [d.name for d in folders] == ["Sorter_A"]
+    assert [d.name for d in folders] == ["Machine_A"]
     assert e.source_folders(tmp_path / "nowhere") == []
 
 
@@ -165,12 +165,12 @@ def test_compare_bare_archives_without_manifests(tmp_path, prod):
     bare = tmp_path / "bare"
     bare.mkdir()
     # the plant's own naming, no manifest, no changelog beside them
-    shutil.copy(str(first.archive), str(bare / "LINE1_MSC_20260825_1612.zip"))
-    shutil.copy(str(third.archive), str(bare / "LINE1_MSC_20260907_1647.zip"))
-    out, counts = e.compare(bare / "LINE1_MSC_20260825_1612.zip", bare / "LINE1_MSC_20260907_1647.zip", cfg,
+    shutil.copy(str(first.archive), str(bare / "LINE1_PLC_20260825_1612.zip"))
+    shutil.copy(str(third.archive), str(bare / "LINE1_PLC_20260907_1647.zip"))
+    out, counts = e.compare(bare / "LINE1_PLC_20260825_1612.zip", bare / "LINE1_PLC_20260907_1647.zip", cfg,
                             log=lambda s: None)
     assert counts == (2, 1, 1)
-    assert out.name == "2026-08-25_16-12-00_to_2026-09-07_16-47-00_LINE1_MSC_COMPARE.txt"
+    assert out.name == "2026-08-25_16-12-00_to_2026-09-07_16-47-00_LINE1_PLC_COMPARE.txt"
     text = out.read_text(encoding="utf-8")
     assert "no manifest: files hashed from the archive" in text
     assert "From taken: 2026-08-25 16:12:00" in text and "To taken: 2026-09-07 16:47:00" in text
@@ -180,8 +180,8 @@ def test_compare_bare_archives_without_manifests(tmp_path, prod):
     nested = bare / "nested_2026-09-08_10-00-00.zip"
     with zipfile.ZipFile(str(nested), "w") as z:
         for p in e.walk(prod[0]):
-            z.write(str(p), "PRODUCTION/" + p.relative_to(prod[0]).as_posix())
-    out3, counts3 = e.compare(bare / "LINE1_MSC_20260825_1612.zip", nested, cfg, log=lambda s: None)
+            z.write(str(p), "Machine/" + p.relative_to(prod[0]).as_posix())
+    out3, counts3 = e.compare(bare / "LINE1_PLC_20260825_1612.zip", nested, cfg, log=lambda s: None)
     assert counts3 == (2, 1, 1)
 
 
@@ -226,14 +226,14 @@ def test_prune_keeps_the_newest_and_the_compare_files(tmp_path, prod):
     for p in old.paths():
         p.rename(p.with_name(p.name.replace(old.stamp, "2020-01-01_00-00-00")))
     removed = e.prune(folder, keep_days=30, log=lambda s: None)
-    assert removed == ["2020-01-01_00-00-00_Sorter_A"]
+    assert removed == ["2020-01-01_00-00-00_Machine_A"]
     assert [b.stamp for b in e.list_backups(folder)] == [third.stamp]
 
 
 def test_run_applies_the_retention_setting(tmp_path, prod):
     src, loc = prod
     cfg = _cfg(tmp_path, keep_last=2)
-    folder = Path(cfg["backup_root"]) / "Sorter_A"
+    folder = Path(cfg["backup_root"]) / "Machine_A"
     cp1 = e.run(loc, cfg, log=lambda s: None)
     time.sleep(1.05)
     (src / "a.txt").write_text("a", encoding="utf-8")
@@ -257,7 +257,7 @@ def test_backups_are_signed_and_verify(tmp_path, prod):
     cfg = _cfg(tmp_path)
     lines = []
     cp = e.run(loc, cfg, log=lines.append)
-    b = e.list_backups(Path(cfg["backup_root"]) / "Sorter_A")[0]
+    b = e.list_backups(Path(cfg["backup_root"]) / "Machine_A")[0]
     sig = b.meta["signature"]
     assert sig["alg"] == "ed25519" and sig["signer"] == e.signer_id() and len(sig["key_id"]) == 16
     assert sig["archive_sha256"] == e.hash_file(b.archive)
@@ -287,7 +287,7 @@ def test_tampering_is_detected(tmp_path, prod):
     src, loc = prod
     cfg = _cfg(tmp_path)
     e.run(loc, cfg, log=lambda s: None)
-    b = e.list_backups(Path(cfg["backup_root"]) / "Sorter_A")[0]
+    b = e.list_backups(Path(cfg["backup_root"]) / "Machine_A")[0]
     original = b.manifest.read_bytes()
     # 1. the manifest is edited: the author claim changes
     meta, files = e.load_manifest(b.manifest)
@@ -329,13 +329,13 @@ def test_unsigned_backups_are_reported_as_such(tmp_path, prod):
     src, loc = prod
     cfg = _cfg(tmp_path, sign=False)
     cp = e.run(loc, cfg, log=lambda s: None)
-    b = e.list_backups(Path(cfg["backup_root"]) / "Sorter_A")[0]
+    b = e.list_backups(Path(cfg["backup_root"]) / "Machine_A")[0]
     assert "signature" not in b.meta and b.sig_mark() == "unsigned"
     assert "Signature: (none)" in cp.read_text(encoding="utf-8")
     assert not (Path(cfg["backup_root"]) / "_keys").exists()
     # an old bare-map manifest
     flat = {"a.txt": {"size": 1, "mtime": 0.0, "sha256": "x"}}
-    p = tmp_path / "2026-08-05_12-24-06_Sorter_C_MANIFEST.json"
+    p = tmp_path / "2026-08-05_12-24-06_Machine_C_MANIFEST.json"
     p.write_text(json.dumps(flat), encoding="utf-8")
     assert e.verify_manifest(p)["status"] == "unsigned"
     assert e.verify_archive(p)["status"] == "unsigned"
@@ -348,7 +348,7 @@ def test_restore_into_a_new_folder_verifies_every_file(tmp_path, prod):
     (src / "sub").mkdir()
     (src / "sub" / "deep.csv").write_text("a;b\n1;2\n", encoding="utf-8")
     e.run(loc, cfg, log=lambda s: None, note="golden")
-    b = e.list_backups(Path(cfg["backup_root"]) / "Sorter_A")[0]
+    b = e.list_backups(Path(cfg["backup_root"]) / "Machine_A")[0]
     target = tmp_path / "restored"
     plan = e.restore_plan(b, target)
     assert sorted(plan["add"]) == ["settings.ini", "settings.json", "sub/deep.csv"] and not plan["replace"]
@@ -376,7 +376,7 @@ def test_restore_selected_files_only(tmp_path, prod):
     src, loc = prod
     cfg = _cfg(tmp_path)
     e.run(loc, cfg, log=lambda s: None)
-    b = e.list_backups(Path(cfg["backup_root"]) / "Sorter_A")[0]
+    b = e.list_backups(Path(cfg["backup_root"]) / "Machine_A")[0]
     good = (src / "settings.json").read_bytes()
     # one file goes wrong on the plant, another is added
     (src / "settings.json").write_text("{\"broken\": true}", encoding="utf-8")
@@ -397,7 +397,7 @@ def test_restore_over_the_source_takes_a_safety_backup_first(tmp_path, prod):
     src, loc = prod
     cfg = _cfg(tmp_path, locations=[loc], keep_last=1)
     e.run(loc, cfg, log=lambda s: None, note="known good")
-    folder = Path(cfg["backup_root"]) / "Sorter_A"
+    folder = Path(cfg["backup_root"]) / "Machine_A"
     b = e.list_backups(folder)[0]
     assert e.source_of(b, cfg) == src and e.location_for(b, cfg) == loc
     time.sleep(1.05)
@@ -413,7 +413,7 @@ def test_restore_over_the_source_takes_a_safety_backup_first(tmp_path, prod):
     assert bks[1].meta["note"] == "safety backup before restore of %s" % b.stamp and bks[1].signature()["status"] == "signed"
     assert "junk.tmp" in bks[1].files                      # the overwritten state, junk included, is preserved
     assert out["restored"] == ["settings.json"] and out["removed"] == ["junk.tmp"] and out["skipped"] == ["settings.ini"]
-    assert json.loads((src / "settings.json").read_text(encoding="utf-8"))["machine"] == "Sorter_A"
+    assert json.loads((src / "settings.json").read_text(encoding="utf-8"))["machine"] == "Machine_A"
     assert not (src / "junk.tmp").exists()
     assert "Safety backup: %s" % out["safety"] in out["record"].read_text(encoding="utf-8")
     assert any("Safety backup of" in l for l in lines)
@@ -428,7 +428,7 @@ def test_restore_refuses_a_tampered_archive(tmp_path, prod):
     src, loc = prod
     cfg = _cfg(tmp_path)
     e.run(loc, cfg, log=lambda s: None)
-    b = e.list_backups(Path(cfg["backup_root"]) / "Sorter_A")[0]
+    b = e.list_backups(Path(cfg["backup_root"]) / "Machine_A")[0]
     # the archive is rewritten with a changed file; its manifest hash no longer matches
     tmp = tmp_path / "evil.zip"
     with zipfile.ZipFile(b.archive) as zin, zipfile.ZipFile(tmp, "w") as zout:
@@ -451,7 +451,7 @@ def test_restore_without_a_manifest_is_unverified(tmp_path, prod):
     src, loc = prod
     cfg = _cfg(tmp_path)
     e.run(loc, cfg, log=lambda s: None)
-    b = e.list_backups(Path(cfg["backup_root"]) / "Sorter_A")[0]
+    b = e.list_backups(Path(cfg["backup_root"]) / "Machine_A")[0]
     b.manifest.unlink()
     b = e.list_backups(b.folder)[0]
     assert not b.complete

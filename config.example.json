@@ -11,14 +11,14 @@
   "rar_path": "C:\\Program Files\\WinRAR\\Rar.exe",
   "locations": [
     {
-      "name": "Line 1 Sorter",
-      "backup_name": "LINE1_SORTER",
-      "path": "\\\\10.0.0.11\\c$\\PRODUCTION"
+      "name": "Line 1 PLC",
+      "backup_name": "LINE1_PLC",
+      "path": "\\\\10.0.0.11\\c$\\Config"
     },
     {
       "name": "Demo (local)",
       "backup_name": "DEMO",
-      "path": "demo\\Folder_1\\PRODUCTION"
+      "path": "demo\\Line1"
     }
   ]
 }

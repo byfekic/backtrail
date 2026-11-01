@@ -30,39 +30,38 @@ def mk(root, files):
         p = root / rel; p.parent.mkdir(parents=True, exist_ok=True); p.write_text(txt, encoding="utf-8")
 
 
-base = {"Applications/PlantConfig.xml": "<PlantConfig>\n  <Line>1</Line>\n  <Timeout>100</Timeout>\n</PlantConfig>\n",
-        "Applications/Version.csv": "# Plant Version file\n6.2.0\n# Description: v6.2.0-16-g7b480228\n",
-        "IODriver/BusField.csv": "#;Board;Node;Type\n@;1;5;0x1;;;;;;;;;#;ET200SP\n@;1;6;0x1;;;;;;;;;#;Coupler six\n",
-        "IODriver/IODriverConfig.xml": "<cfg>\n  <timeout>100</timeout>\n  <mode>run</mode>\n</cfg>\n",
-        "MSC/DB_Csv/Plant_Inputs.csv": "#;Signal ID;Type;Logic;...\n@;CHUTE_0201_FULL;1;0;0;0;0;0;0;0;0;5;0;0;0;1;Chute 201 full;\n",
-        "MSC/DB_Csv/Plant_Outputs.csv": "#;Output Name;...\n@;CHUTE_0201_OPEN;2;0;5;2;0;0;1;Chute 201 open\n",
-        "MSC/DB_Csv/Speeds.csv": "@;1;2800;#\n@;2;2500;#\n",
-        "DataDrawSupervisor/DataDraw_PlantData/settings.json": json.dumps({"machine": "Sorter_A", "speed": 1.0, "recirculation": 10, "maxItems": 1200}, indent=2),
-        "settings.json": json.dumps({"plant": "Demo", "line": 1, "sorter": {"speed": 1.0, "windows": 10}}, indent=2)}
-srcs = [("Line 1 Sorter", "LINE1_SORTER", "Sorter"),
-        ("Line 1 Upstream PLC", "LINE1_UPSTREAM_PLC", "Upstream"),
-        ("Maintenance PC", "MAINT_PC", "Maint")]
+base = {"config/machine.json": json.dumps({"machine": "Line 1", "speed": 1.0, "recirculation": 10, "maxItems": 1200}, indent=2),
+        "config/network.xml": "<network>\n  <timeout>100</timeout>\n  <mode>run</mode>\n</network>\n",
+        "config/version.txt": "6.2.0\nbuild 2026-09-14\n",
+        "io/io_map.csv": "signal;board;channel;type\nBELT_RUN;1;5;DI\nGATE_OPEN;1;6;DO\n",
+        "recipes/recipe_A.csv": "step;speed;dwell\n1;2800;5\n2;2500;8\n",
+        "recipes/speeds.csv": "zone;speed\n1;2800\n2;2500\n",
+        "hmi/settings.json": json.dumps({"language": "en", "speed": 1.0, "windows": 10}, indent=2),
+        "settings.json": json.dumps({"line": 1, "machine": {"speed": 1.0, "windows": 10}}, indent=2)}
+srcs = [("Line 1 PLC", "LINE1_PLC", "Line1"),
+        ("Line 1 HMI", "LINE1_HMI", "Line1_HMI"),
+        ("Line 2 PLC", "LINE2_PLC", "Line2")]
 locs = []
 for name, bname, folder in srcs:
-    mk(plant / folder / "PRODUCTION", base); locs.append({"name": name, "backup_name": bname, "path": str(plant / folder / "PRODUCTION")})
+    mk(plant / folder, base); locs.append({"name": name, "backup_name": bname, "path": str(plant / folder)})
 cfg = {"backup_root": str(bk), "archive_format": "zip", "rar_path": r"C:\Program Files\WinRAR\Rar.exe", "compress_level": 1,
        "parallel_backups": 3, "keep_last": 30, "keep_days": 0, "schedule_time": "20:00", "locations": locs}
 quiet = lambda s: None  # noqa: E731
 for l in locs: e.run(l, cfg, quiet, note="baseline after commissioning", mode="manual")
 time.sleep(1.1)
 for name, bname, folder in srcs:
-    p = plant / folder / "PRODUCTION" / "DataDrawSupervisor/DataDraw_PlantData/settings.json"; d = json.loads(p.read_text()); d["speed"] = 1.5; d["windows"] = 12; p.write_text(json.dumps(d, indent=2))
-    (plant / folder / "PRODUCTION" / "IODriver/IODriverConfig.xml").write_text("<cfg>\n  <timeout>250</timeout>\n  <mode>run</mode>\n  <debug>1</debug>\n</cfg>\n")
-    (plant / folder / "PRODUCTION" / "MSC/DB_Csv/Plant_Inputs.csv").write_text("#;Signal ID;Type;Logic;...\n@;CHUTE_0201_FULL;1;0;0;0;0;0;0;0;0;5;0;0;0;1;Chute 201 full;\n@;CHUTE_0202_FULL;1;0;0;0;0;0;0;0;0;5;0;1;0;1;Chute 202 full;\n")
+    p = plant / folder / "hmi/settings.json"; d = json.loads(p.read_text()); d["speed"] = 1.5; d["windows"] = 12; p.write_text(json.dumps(d, indent=2))
+    (plant / folder / "config/network.xml").write_text("<network>\n  <timeout>250</timeout>\n  <mode>run</mode>\n  <debug>1</debug>\n</network>\n")
+    (plant / folder / "io/io_map.csv").write_text("signal;board;channel;type\nBELT_RUN;1;5;DI\nGATE_OPEN;1;6;DO\nGATE_2_OPEN;1;7;DO\n")
 for l in locs: e.run(l, cfg, quiet, note="", mode="scheduled")
 time.sleep(1.1)
 for name, bname, folder in srcs:
-    (plant / folder / "PRODUCTION" / "MSC/DB_Csv/Speeds.csv").write_text("@;1;2800;#\n@;2;2600;#\n@;3;2000;#\n")
-    (plant / folder / "PRODUCTION" / "Applications/Version.csv").write_text("# Plant Version file\n6.2.1\n# Description: v6.2.1-3-gabcdef12\n")
-    (plant / folder / "PRODUCTION" / "MSC/DB_Csv/Plant_Outputs.csv").unlink()
-for l in locs: e.run(l, cfg, quiet, note="after sorter firmware 6.2.1", mode="manual")
+    (plant / folder / "recipes/speeds.csv").write_text("zone;speed\n1;2800\n2;2600\n3;2000\n")
+    (plant / folder / "config/version.txt").write_text("6.2.1\nbuild 2026-10-02\n")
+    (plant / folder / "recipes/recipe_A.csv").unlink()
+for l in locs: e.run(l, cfg, quiet, note="after PLC firmware 6.2.1", mode="manual")
 (app / "config.json").write_text(json.dumps(cfg, indent=2)); (app / "state.json").write_text("{}")
-print("history ready:", [b.label().encode("ascii", "replace").decode() for b in e.list_backups(bk / "LINE1_SORTER")])
+print("history ready:", [b.label().encode("ascii", "replace").decode() for b in e.list_backups(bk / "LINE1_PLC")])
 
 src = io.open(str(PROJ / "backtrail.py"), encoding="utf-8").read()
 TAIL = r'''
@@ -137,8 +136,8 @@ def pick_hit():
 step(do_search, 900); step(pick_hit, 500)
 step(lambda: shot_top("06_search_history.png"), 300); step(close_top, 300)
 # --- restore: a file goes wrong on the plant, the older backup is put back over the source
-bad=S/"PLANT"/"Sorter"/"PRODUCTION"/"MSC"/"DB_Csv"/"Speeds.csv"
-def break_plant(): bad.write_text("@;1;9999;#\n"); (S/"PLANT"/"Sorter"/"PRODUCTION"/"debug.tmp").write_text("x")
+bad=S/"PLANT"/"Line1"/"recipes"/"speeds.csv"
+def break_plant(): bad.write_text("zone;speed\n1;9999\n"); (S/"PLANT"/"Line1"/"debug.tmp").write_text("x")
 step(break_plant, 300)
 step(lambda: version_history(), 900)
 def pick_hist(n):
@@ -147,7 +146,7 @@ def pick_hist(n):
 step(lambda: pick_hist(2), 500)
 step(lambda: shot_top("04_version_history.png"), 300)
 def filter_msc():
-    cb=widgets(tops()[-1],ttk.Combobox)[0]; cb.set("LINE1_SORTER"); cb.event_generate("<<ComboboxSelected>>")
+    cb=widgets(tops()[-1],ttk.Combobox)[0]; cb.set("LINE1_PLC"); cb.event_generate("<<ComboboxSelected>>")
 step(filter_msc, 400); step(lambda: pick_hist(0), 400)
 def click(text):
     for b in widgets(tops()[-1],ttk.Button):
@@ -184,10 +183,10 @@ try:
     exec(compile(code, str(app / "backtrail.py"), "exec"), {"__file__": str(app / "backtrail.py"), "__name__": "__main__", "S": S})
 finally:
     os.chdir(str(PROJ))
-    print("restored Speeds.csv:", (S / "PLANT" / "Sorter" / "PRODUCTION" / "MSC" / "DB_Csv" / "Speeds.csv").read_text())
-    print("debug.tmp exists:", (S / "PLANT" / "Sorter" / "PRODUCTION" / "debug.tmp").exists())
-    print("MSC history:", [b.label().encode("ascii", "replace").decode() for b in e.list_backups(bk / "LINE1_SORTER")])
-    print("restores:", [p.name for p in e.list_restores(bk / "LINE1_SORTER")])
+    print("restored speeds.csv:", (S / "PLANT" / "Line1" / "recipes" / "speeds.csv").read_text())
+    print("debug.tmp exists:", (S / "PLANT" / "Line1" / "debug.tmp").exists())
+    print("Line 1 history:", [b.label().encode("ascii", "replace").decode() for b in e.list_backups(bk / "LINE1_PLC")])
+    print("restores:", [p.name for p in e.list_restores(bk / "LINE1_PLC")])
     if letter:
         subprocess.run(["subst", letter + ":", "/d"], capture_output=True)
         print("drive", letter + ":", "released")
