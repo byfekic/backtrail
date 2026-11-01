@@ -1,0 +1,24 @@
+{
+  "backup_root": "D:\\Backtrail\\backups",
+  "archive_format": "zip",
+  "compress_level": 1,
+  "parallel_backups": 3,
+  "keep_last": 30,
+  "keep_days": 0,
+  "schedule_time": "20:00",
+  "workers": 0,
+  "sign": true,
+  "rar_path": "C:\\Program Files\\WinRAR\\Rar.exe",
+  "locations": [
+    {
+      "name": "Line 1 Sorter",
+      "backup_name": "LINE1_SORTER",
+      "path": "\\\\10.0.0.11\\c$\\PRODUCTION"
+    },
+    {
+      "name": "Demo (local)",
+      "backup_name": "DEMO",
+      "path": "demo\\Folder_1\\PRODUCTION"
+    }
+  ]
+}

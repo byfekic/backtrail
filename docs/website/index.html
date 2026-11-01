@@ -1,0 +1,257 @@
+<title>Backtrail</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Sora:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: one reading column; the signed changelog is the hero exhibit, screenshots alternate sides below. */
+:root {
+  --bg: #F4F6F7;
+  --surface: #FFFFFF;
+  --ink: #1B2733;
+  --muted: #5C6B78;
+  --line: #D8DEE4;
+  --accent: #0F766E;
+  --accent-ink: #FFFFFF;
+  --accent-soft: #D9F1EC;
+  --ledger-bg: #0F172A;
+  --ledger-fg: #E2E8F0;
+  --ledger-dim: #94A3B8;
+  --ok: #4ADE80;
+  --warn: #FBBF24;
+  --bad: #F87171;
+  --display: 'Sora', 'Segoe UI', Arial, sans-serif;
+  --body: 'IBM Plex Sans', 'Segoe UI', Arial, sans-serif;
+  --mono: 'IBM Plex Mono', Consolas, 'Courier New', monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0B1220; --surface: #141C2B; --ink: #E6EBF0; --muted: #9AA8B6; --line: #26324A;
+    --accent: #2DD4BF; --accent-ink: #062B27; --accent-soft: #10332F;
+    --ledger-bg: #060B14; --ledger-fg: #E2E8F0; --ledger-dim: #7C8BA0; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0B1220; --surface: #141C2B; --ink: #E6EBF0; --muted: #9AA8B6; --line: #26324A;
+  --accent: #2DD4BF; --accent-ink: #062B27; --accent-soft: #10332F;
+  --ledger-bg: #060B14; --ledger-fg: #E2E8F0; --ledger-dim: #7C8BA0; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--ink); font-family: var(--body); font-size: 17px; line-height: 1.55;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 0; }
+.wrap { max-width: 1080px; margin: 0 auto; }
+h1, h2, h3 { font-family: var(--display); text-wrap: balance; margin: 0; line-height: 1.15; }
+p { margin: 0; }
+a { color: var(--accent); }
+.eyebrow { font-size: 13px; font-weight: 600; letter-spacing: .12em; text-transform: uppercase; color: var(--accent); }
+
+/* header */
+.top { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding-block: 20px; }
+.brand { display: flex; align-items: center; gap: 12px; font-family: var(--display); font-weight: 700; font-size: 22px; color: var(--ink); text-decoration: none; }
+.brand img { width: 36px; height: 36px; border-radius: 9px; }
+.nav { display: flex; gap: 22px; font-size: 15px; font-weight: 500; }
+.nav a { color: var(--muted); text-decoration: none; }
+.nav a:hover, .nav a:focus-visible { color: var(--accent); }
+
+/* hero */
+.hero { display: grid; grid-template-columns: 1.05fr 1fr; gap: 48px; align-items: center; padding-block: 56px 72px; }
+.hero h1 { font-size: clamp(40px, 6vw, 64px); font-weight: 700; letter-spacing: -0.02em; }
+.hero .lead { font-size: 20px; color: var(--muted); margin-top: 20px; max-width: 34em; }
+.cta { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 32px; }
+.btn { display: inline-flex; align-items: center; gap: 8px; padding: 12px 20px; border-radius: 10px; font-weight: 600; text-decoration: none; font-size: 16px; border: 1px solid var(--line); color: var(--ink); background: var(--surface); }
+.btn.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+.btn:focus-visible { outline: 3px solid var(--accent-soft); outline-offset: 2px; }
+.facts { display: flex; flex-wrap: wrap; gap: 8px 20px; margin-top: 28px; font-size: 14px; color: var(--muted); }
+
+/* the changelog ledger */
+.ledger { background: var(--ledger-bg); color: var(--ledger-fg); border-radius: 14px; padding: 22px 24px; font-family: var(--mono); font-size: 14px; line-height: 1.6; overflow-x: auto; min-width: 0; box-shadow: 0 24px 48px -24px rgba(15, 23, 42, .5); }
+.ledger .dim { color: var(--ledger-dim); }
+.ledger .k { color: var(--accent); }
+.ledger .ok { color: var(--ok); } .ledger .warn { color: var(--warn); } .ledger .bad { color: var(--bad); }
+.ledger pre { margin: 0; font: inherit; white-space: pre; }
+.ledger .cap { font-family: var(--body); font-size: 13px; color: var(--ledger-dim); margin-top: 14px; }
+
+/* sections */
+section { padding-block: 56px; border-top: 1px solid var(--line); }
+.sec-head { max-width: 40em; margin-bottom: 32px; }
+.sec-head h2 { font-size: clamp(28px, 3.6vw, 38px); font-weight: 600; margin-top: 10px; }
+.sec-head p { color: var(--muted); margin-top: 12px; }
+
+.tiles { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; }
+.tile { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 22px; min-width: 0; }
+.tile h3 { font-size: 20px; font-weight: 600; margin-top: 12px; }
+.tile p { color: var(--muted); margin-top: 8px; font-size: 15px; }
+.tile .glyph { width: 36px; height: 36px; border-radius: 9px; background: var(--accent-soft); display: grid; place-items: center; color: var(--accent); font-family: var(--display); font-weight: 700; font-size: 16px; }
+
+.steps { counter-reset: s; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 12px; }
+.step { position: relative; padding: 18px 16px 18px; border-top: 3px solid var(--accent); background: var(--surface); border-radius: 0 0 10px 10px; min-width: 0; }
+.step::before { counter-increment: s; content: counter(s); font-family: var(--display); font-weight: 700; color: var(--accent); font-size: 14px; }
+.step h3 { font-size: 18px; margin-top: 6px; }
+.step p { font-size: 14px; color: var(--muted); margin-top: 6px; }
+
+.shot { display: grid; grid-template-columns: 1.3fr 1fr; gap: 36px; align-items: center; padding-block: 28px; }
+.shot:nth-of-type(even) .text { order: -1; }
+.shot img { width: 100%; max-width: 100%; height: auto; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); }
+.shot h3 { font-size: 24px; font-weight: 600; }
+.shot p { color: var(--muted); margin-top: 10px; }
+.shot .text { min-width: 0; }
+
+.trust { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.trust .card { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 24px; min-width: 0; }
+.trust h3 { font-size: 22px; }
+.trust p { color: var(--muted); margin-top: 10px; }
+.marks { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin-top: 20px; }
+.mark { font-size: 14px; padding: 12px 14px; border-radius: 10px; background: var(--surface); border: 1px solid var(--line); min-width: 0; }
+.mark b { display: block; margin-bottom: 2px; }
+.mark.ok b { color: #15803D; } .mark.bad b { color: #B91C1C; } .mark.warn b { color: #B45309; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .mark.ok b { color: var(--ok); } :root:not([data-theme="light"]) .mark.bad b { color: var(--bad); } :root:not([data-theme="light"]) .mark.warn b { color: var(--warn); } }
+:root[data-theme="dark"] .mark.ok b { color: var(--ok); } :root[data-theme="dark"] .mark.bad b { color: var(--bad); } :root[data-theme="dark"] .mark.warn b { color: var(--warn); }
+
+table { border-collapse: collapse; width: 100%; font-size: 15px; }
+th, td { text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { width: 32%; color: var(--muted); font-weight: 500; }
+.specs { overflow-x: auto; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 8px 12px; }
+
+footer { padding-block: 40px; border-top: 1px solid var(--line); color: var(--muted); font-size: 14px; display: flex; flex-wrap: wrap; gap: 12px 24px; justify-content: space-between; }
+
+@media (max-width: 900px) {
+  .hero, .shot, .trust { grid-template-columns: 1fr; }
+  .shot:nth-of-type(even) .text { order: 0; }
+  .tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .steps { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .marks { grid-template-columns: 1fr; }
+}
+@media (max-width: 560px) {
+  .tiles, .steps { grid-template-columns: 1fr; }
+  .nav { display: none; }
+  body { font-size: 16px; }
+}
+@media (prefers-reduced-motion: no-preference) { .btn { transition: transform .15s ease; } .btn:hover { transform: translateY(-1px); } }
+</style>
+
+<div class="wrap">
+<header class="top">
+  <a class="brand" href="#top"><img src="img/icon.png" alt="">Backtrail</a>
+  <nav class="nav"><a href="#what">What it does</a><a href="#how">How it works</a><a href="#screens">Screens</a><a href="#trust">Trust</a><a href="#specs">Specs</a></nav>
+</header>
+
+<div class="hero" id="top">
+  <div>
+    <p class="eyebrow">Backups for production folders</p>
+    <h1>Signed backups with a readable history</h1>
+    <p class="lead">Backtrail copies the folders that run your machines, writes down exactly what changed and who changed it, seals every backup with a signature, and puts files back when it has to.</p>
+    <div class="cta">
+      <a class="btn primary" href="https://github.com/[your-account]/backtrail/releases">Download for Windows</a>
+      <a class="btn" href="https://github.com/[your-account]/backtrail">View on GitHub</a>
+    </div>
+    <div class="facts"><span>Windows 10 / 11</span><span>No installer, no admin rights</span><span>ZIP or RAR</span><span>Open source, MIT</span></div>
+  </div>
+  <div class="ledger" aria-label="Example changelog written by Backtrail">
+<pre><span class="dim">PRODUCTION BACKUP CHANGELOG</span>
+<span class="k">Date:</span> 2026-10-24 10:08:18
+<span class="k">Name:</span> LINE1_SORTER
+<span class="k">By:</span> alice @ WS-LINE1
+<span class="k">Note:</span> before firmware update 6.2.1
+<span class="k">Signature:</span> ed25519 key dbf6103cee4a26c4
+
+<span class="ok">ADDED</span>      (none)
+<span class="bad">DELETED</span>    - MSC/DB_Csv/Plant_Outputs.csv
+<span class="warn">MODIFIED</span>   * Applications/Version.csv
+           * DataDrawSupervisor/settings.json
+               ~ $.speed: 1.0 -&gt; 1.5
+               + $.windows: 12
+
+SUMMARY    Added: 0  Modified: 2  Deleted: 1</pre>
+    <p class="cap">One changelog per backup. Who, when, why, and for JSON settings the exact key that moved.</p>
+  </div>
+</div>
+
+<section id="what">
+  <div class="sec-head">
+    <p class="eyebrow">What it does</p>
+    <h2>A copy is not a history. Backtrail keeps both.</h2>
+    <p>Nightly archives tell you nothing about Tuesday versus Monday. Backtrail compares every backup with the one before and keeps the answer next to the archive, in plain text.</p>
+  </div>
+  <div class="tiles">
+    <div class="tile"><div class="glyph">01</div><h3>Capture</h3><p>Any number of local or network folders, in parallel, as ZIP or RAR. Files in use are skipped and listed, never a reason to stop.</p></div>
+    <div class="tile"><div class="glyph">02</div><h3>Explain</h3><p>Added, modified and deleted files since the last run. For JSON settings, the key and its old and new value. Any two backups can be compared, weeks apart.</p></div>
+    <div class="tile"><div class="glyph">03</div><h3>Prove</h3><p>Every file gets a SHA-256 fingerprint and every backup an Ed25519 signature. A changed file, list or author claim shows as INVALID.</p></div>
+    <div class="tile"><div class="glyph">04</div><h3>Restore</h3><p>One file or the whole folder, into a new place or over the live source. Verified before written, with a signed safety backup first.</p></div>
+  </div>
+</section>
+
+<section id="how">
+  <div class="sec-head">
+    <p class="eyebrow">How it works</p>
+    <h2>Press Run. Five things happen.</h2>
+  </div>
+  <div class="steps">
+    <div class="step"><h3>Scan</h3><p>Every file is read and fingerprinted, on all cores.</p></div>
+    <div class="step"><h3>Archive</h3><p>The folder is packed at the same time as the scan.</p></div>
+    <div class="step"><h3>Compare</h3><p>New fingerprints against the previous backup’s manifest. No archive is unpacked.</p></div>
+    <div class="step"><h3>Write</h3><p>The changelog and the manifest, with your name, PC, time and note.</p></div>
+    <div class="step"><h3>Sign</h3><p>The manifest is sealed with your private key. Any later change shows.</p></div>
+  </div>
+</section>
+
+<section id="screens">
+  <div class="sec-head">
+    <p class="eyebrow">Screens</p>
+    <h2>One window. Four questions answered.</h2>
+  </div>
+  <div class="shot">
+    <img src="img/01_main_window.png" alt="Backtrail main window with dashboard cards, sources table, settings and activity log">
+    <div class="text"><h3>What is backed up, and when</h3><p>Sources with their live Ready or Offline state, the last backup and who took it. Type a note, press Run, read the log.</p></div>
+  </div>
+  <div class="shot">
+    <img src="img/04_version_history.png" alt="Version History: a table of every backup with author, mode, signature mark and note">
+    <div class="text"><h3>What happened, in order</h3><p>Every backup with its author, mode, signature mark and note. Click a row and read its changelog. Search History finds a file name, a parameter or a value across all of them.</p></div>
+  </div>
+  <div class="shot">
+    <img src="img/05_compare_backups.png" alt="Compare Backups: an older and a newer backup chosen, the comparison changelog below">
+    <div class="text"><h3>What is different between these two</h3><p>Pick FROM and TO, however far apart. One changelog for the span, plus the runs in between with their authors. Works on plain archive files too.</p></div>
+  </div>
+  <div class="shot">
+    <img src="img/07_restore_dialog.png" alt="Restore dialog: the files of a backup compared with the live source, one differing file selected">
+    <div class="text"><h3>Put it back</h3><p>Each file shows whether it is identical, different or missing on the machine. Select the changed ones, restore into a folder or over the source. A safety backup is taken first.</p></div>
+  </div>
+</section>
+
+<section id="trust">
+  <div class="sec-head">
+    <p class="eyebrow">Trust</p>
+    <h2>The fingerprint says what. The signature says who.</h2>
+  </div>
+  <div class="trust">
+    <div class="card"><h3>SHA-256 fingerprint</h3><p>64 characters that stand for the exact content of a file. The same bytes give the same value in any tool on any PC; one changed character gives a completely different one. It cannot say who made the file, and anyone can recompute it after a change.</p></div>
+    <div class="card"><h3>Ed25519 signature</h3><p>Each user gets a private key on their PC and a public key in the backup folder. The manifest, with every fingerprint, the archive’s fingerprint, the name, date and note, is sealed with the private key. Anyone checks it with the public one; nobody can forge it without the private one.</p></div>
+  </div>
+  <div class="marks">
+    <div class="mark ok"><b>✔ signed</b>Exactly as the named person left it.</div>
+    <div class="mark bad"><b>✖ INVALID</b>A file, the list or the name was changed afterwards.</div>
+    <div class="mark warn"><b>? untrusted key</b>Intact, but signed by a key the trust store does not know.</div>
+  </div>
+</section>
+
+<section id="specs">
+  <div class="sec-head">
+    <p class="eyebrow">Specs</p>
+    <h2>Small, local, scriptable</h2>
+  </div>
+  <div class="specs">
+  <table>
+    <tr><th>Runs on</th><td>Windows 10 and 11. A folder with an exe, no installer, no admin rights. Also runs from source with Python 3.10+.</td></tr>
+    <tr><th>Sources</th><td>Any local or UNC path (<code>\\server\share\PRODUCTION</code>). Several at once.</td></tr>
+    <tr><th>Archives</th><td>ZIP built in, three compression levels. RAR through WinRAR.</td></tr>
+    <tr><th>Integrity</th><td>SHA-256 per file; Ed25519 signature per backup; <code>--verify</code> re-checks everything and exits 1 on a problem.</td></tr>
+    <tr><th>Automation</th><td>Daily Windows scheduled task. <code>Backtrail.exe --run --note "text"</code> from any scheduler.</td></tr>
+    <tr><th>Retention</th><td>Keep the newest N backups and/or the last N days per source. The newest is never removed.</td></tr>
+    <tr><th>Privacy</th><td>Nothing leaves your network. Backtrail reads the folders you name and writes to the destination you choose.</td></tr>
+    <tr><th>License</th><td>MIT. Source, tests and build script on GitHub.</td></tr>
+  </table>
+  </div>
+</section>
+
+<footer>
+  <span>Backtrail · Signed backups with a readable history</span>
+  <span><a href="https://github.com/[your-account]/backtrail">GitHub</a> · <a href="https://github.com/[your-account]/backtrail/blob/main/docs/GUIDE.md">User guide</a></span>
+</footer>
+</div>

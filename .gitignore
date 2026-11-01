@@ -1,0 +1,13 @@
+# user data: never commit a real configuration, the last-run state or logs
+config.json
+state.json
+*.log
+backups/
+_restore/
+
+# build outputs
+build/
+dist/
+__pycache__/
+*.pyc
+.pytest_cache/
